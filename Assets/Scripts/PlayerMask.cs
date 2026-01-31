@@ -21,14 +21,8 @@ public class PlayerMask : NetworkBehaviour
     {
         assignedMask.OnValueChanged += (oldVal, newVal) => ActualizarModelo(newVal);
 
-        if (assignedMask.Value != MaskType.Ninguna)
-        {
-            ActualizarModelo(assignedMask.Value);
-        }
-        else
-        {
-            DesactivarTodosLosModelos();
-        }
+        if (assignedMask.Value != MaskType.Ninguna) ActualizarModelo(assignedMask.Value);
+        else DesactivarTodosLosModelos();
     }
 
     private void ActualizarModelo(MaskType tipo)
@@ -43,9 +37,17 @@ public class PlayerMask : NetworkBehaviour
             case MaskType.Mascara4: if (model4) model4.SetActive(true); break;
         }
 
-        Debug.Log($"Modelo actualizado a: {tipo} para el jugador {OwnerClientId}");
+        // IMPORTANTE: Avisar al movimiento que el Animator ha cambiado
+        // Lo hacemos con un pequeño retraso o frame para que SetActive surta efecto
+        Invoke(nameof(NotificarCambioAnimator), 0.05f);
+    }
 
-        GetComponent<PlayerMovement>().RecargarAnimator();
+    private void NotificarCambioAnimator()
+    {
+        if (TryGetComponent<PlayerMovement>(out var movement))
+        {
+            movement.RecargarAnimator();
+        }
     }
 
     private void DesactivarTodosLosModelos()

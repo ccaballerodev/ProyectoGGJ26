@@ -12,11 +12,24 @@ public class PlayerMovement : NetworkBehaviour
     public float speed = 5f;
     public float rotationSpeed = 10f;
     public float jumpForce = 6f;
-    public float gravity = -18f; // Gravedad un poco más fuerte para evitar el efecto "luna"
+    public float gravity = -18f;
 
     [Header("Detección de Suelo (Raycast)")]
-    public float groundCheckDistance = 0.3f; // Distancia extra debajo de los pies
-    public LayerMask groundLayer;           // Asigna aquí la capa del suelo (puedes poner 'Everything' por ahora)
+    public float groundCheckDistance = 0.3f;
+    public LayerMask groundLayer;
+
+    [Header("Configuración Idle Especial (AFK)")]
+    public float tiempoParaAburrirse = 5f;
+    private bool estaAburrido = false;
+    private string myTimerID;
+
+    // --- VARIABLES DE RED ---
+    // Sincronizan los datos necesarios para las animaciones sin usar NetworkAnimator
+    private NetworkVariable<float> netMoveMagnitude = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsGrounded = new NetworkVariable<bool>(true, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsFalling = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netEstaAburrido = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsJumping = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private float verticalVelocity;
     private bool isGrounded;
@@ -33,48 +46,66 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner) return;
-        inputActions.Player.Enable();
-        inputActions.Player.Jump.performed += OnJumpPerformed;
+        // Generamos el ID siempre, pero el input solo para el dueño
+        myTimerID = "TimerAburrido_" + OwnerClientId;
+
+        if (IsOwner)
+        {
+            inputActions.Player.Enable();
+            inputActions.Player.Jump.performed += OnJumpPerformed;
+        }
+
         RecargarAnimator();
     }
 
     public void RecargarAnimator()
     {
+        // Buscamos el animator en los hijos (el modelo activo lo tendrá)
         animator = GetComponentInChildren<Animator>(false);
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext context)
     {
-        // Saltamos si el Raycast dice que estamos en el suelo
         if (isGrounded)
         {
             verticalVelocity = jumpForce;
+            ResetearTimerAburrimiento();
+            // Trigger manual de salto para red
+            if (IsOwner) StartCoroutine(JumpTriggerRoutine());
         }
+    }
+
+    // Pequeña rutina para que el estado de salto se vea en la red un momento
+    private System.Collections.IEnumerator JumpTriggerRoutine()
+    {
+        netIsJumping.Value = true;
+        yield return new WaitForSeconds(0.1f);
+        netIsJumping.Value = false;
     }
 
     void Update()
     {
-        if (!IsOwner) return;
+        if (IsOwner)
+        {
+            ChequearSueloConRaycast();
+            ManejarMovimientoYGravedad();
+            GestionarTimerAburrimiento();
 
-        ChequearSueloConRaycast();
-        ManejarMovimientoYGravedad();
+            // ACTUALIZAR VARIABLES DE RED
+            netMoveMagnitude.Value = moveInput.magnitude;
+            netIsGrounded.Value = isGrounded;
+            netIsFalling.Value = isFalling;
+            netEstaAburrido.Value = estaAburrido;
+        }
+
+        // ESTO LO EJECUTAN TODOS (Dueño y los demás)
         ActualizarAnimaciones();
     }
 
     private void ChequearSueloConRaycast()
     {
-        // Lanzamos un rayo desde el centro del personaje hacia abajo
-        // El origen es un poco arriba de los pies para evitar errores
         Vector3 origin = transform.position + Vector3.up * 0.1f;
-
-        // Raycast: Origen, Dirección, Información del impacto, Distancia máxima
         isGrounded = Physics.Raycast(origin, Vector3.down, groundCheckDistance + 0.1f, groundLayer);
-
-        // Debug visual para ver el rayo en la escena (Rojo = Aire, Verde = Suelo)
-        Debug.DrawRay(origin, Vector3.down * (groundCheckDistance + 0.1f), isGrounded ? Color.green : Color.red);
-
-        // Estamos cayendo si no tocamos suelo y vamos hacia abajo
         isFalling = !isGrounded && verticalVelocity < -0.5f;
     }
 
@@ -87,48 +118,59 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 right = Vector3.Scale(camTransform.right, new Vector3(1, 0, 1)).normalized;
         Vector3 inputDir = (forward * moveInput.y + right * moveInput.x).normalized;
 
-        // Rotación
         if (inputDir.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(inputDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
-        // Lógica de Gravedad mejorada
-        if (isGrounded && verticalVelocity < 0)
-        {
-            // Pequeña fuerza negativa para mantener al jugador pegado al suelo en rampas
-            verticalVelocity = -2f;
-        }
-        else
-        {
-            // Aplicar gravedad en el aire
-            verticalVelocity += gravity * Time.deltaTime;
-        }
+        if (isGrounded && verticalVelocity < 0) verticalVelocity = -2f;
+        else verticalVelocity += gravity * Time.deltaTime;
 
-        // Aplicar el movimiento total al Character Controller
-        Vector3 horizontalMove = inputDir * speed;
-        Vector3 finalMove = horizontalMove + (Vector3.up * verticalVelocity);
-
+        Vector3 finalMove = (inputDir * speed) + (Vector3.up * verticalVelocity);
         controller.Move(finalMove * Time.deltaTime);
+    }
+
+    private void GestionarTimerAburrimiento()
+    {
+        bool estaRealmenteQuieto = moveInput.magnitude < 0.1f && isGrounded && !isFalling;
+        if (estaRealmenteQuieto)
+        {
+            if (!TimerManager.IsTimerRunning(myTimerID) && !estaAburrido)
+            {
+                TimerManager.StartTimer(myTimerID, tiempoParaAburrirse, () => { estaAburrido = true; });
+            }
+        }
+        else ResetearTimerAburrimiento();
+    }
+
+    private void ResetearTimerAburrimiento()
+    {
+        if (TimerManager.TimerExists(myTimerID)) TimerManager.StopTimer(myTimerID);
+        estaAburrido = false;
     }
 
     private void ActualizarAnimaciones()
     {
-        if (animator == null) return;
+        // Si el modelo cambió o no se ha cargado, intentamos buscarlo
+        if (animator == null || !animator.gameObject.activeInHierarchy)
+        {
+            RecargarAnimator();
+            if (animator == null) return;
+        }
 
-        bool estaMoviendose = moveInput.magnitude > 0.1f;
+        float mag = netMoveMagnitude.Value;
+        bool grounded = netIsGrounded.Value;
+        bool aburrido = netEstaAburrido.Value;
 
-        animator.SetBool("Idle", !estaMoviendose && isGrounded);
-        animator.SetBool("Jog", estaMoviendose && isGrounded);
-
-        // El salto se activa cuando subimos
-        animator.SetBool("Jump", !isGrounded && verticalVelocity > 0);
-
-        // El falling se activa gracias a nuestro Raycast e isFalling
-        animator.SetBool("Fall", isFalling);
+        // Usamos las variables de red para que todos vean lo mismo
+        animator.SetBool("Idle", mag <= 0.1f && grounded && !aburrido);
+        animator.SetBool("Jog", mag > 0.1f && grounded);
+        animator.SetBool("Jump", netIsJumping.Value);
+        animator.SetBool("Fall", netIsFalling.Value);
+        animator.SetBool("IdleQuitMask", aburrido);
     }
 
     void OnEnable() => inputActions?.Player.Enable();
-    void OnDisable() => inputActions?.Player.Disable();
+    void OnDisable() { inputActions?.Player.Disable(); if (myTimerID != null) TimerManager.StopTimer(myTimerID); }
 }
