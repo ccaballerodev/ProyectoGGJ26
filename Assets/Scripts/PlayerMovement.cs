@@ -8,6 +8,7 @@ public class PlayerMovement : NetworkBehaviour
     private Vector2 moveInput;
 
     public float speed = 5f;
+    public float rotationSpeed = 10f;
 
     void Awake()
     {
@@ -38,7 +39,23 @@ public class PlayerMovement : NetworkBehaviour
 
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
 
-        Vector3 move = new Vector3(moveInput.x, 0, moveInput.y);
-        transform.Translate(move * speed * Time.deltaTime);
+        Transform cameraTransform = Camera.main.transform;
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+
+        forward.y = 0f;
+        right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 moveDirection = (forward * moveInput.y + right * moveInput.x).normalized;
+
+        if (moveDirection.magnitude > 0.1f)
+        {
+            transform.Translate(moveDirection * speed * Time.deltaTime, Space.World);
+
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
     }
 }

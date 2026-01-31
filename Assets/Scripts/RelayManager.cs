@@ -15,24 +15,43 @@ public class RelayManager : MonoBehaviour
     public static string joinCodeGame;
 
     [Header("UI")]
+    [SerializeField] TextMeshProUGUI joinCodeText;
     [SerializeField] TMP_InputField joinCodeIF;
-
 
     async void Start()
     {
         try
         {
             await UnityServices.InitializeAsync();
+
             if (!AuthenticationService.Instance.IsSignedIn)
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-            //if (joinCodeText != null) joinCodeText.gameObject.SetActive(false);
+            if (joinCodeText != null) joinCodeText.gameObject.SetActive(false);
 
             NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
 
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
         }
         catch (Exception e) { Debug.LogError("Error en Inicialización: " + e.Message); }
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += AlCargarEscena;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= AlCargarEscena;
+    }
+
+    private void AlCargarEscena(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "InitScene")
+        {
+            GameObject.FindWithTag("txtCode")?.GetComponent<TextMeshProUGUI>().SetText(joinCodeGame);
+        }
     }
 
     private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
@@ -56,7 +75,7 @@ public class RelayManager : MonoBehaviour
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             joinCodeGame = joinCode;
 
-            Debug.Log("Codigo de unión generado: " + joinCode);
+            Debug.Log($"<color=green>¡CODIGO DE UNION GENERADO: {joinCodeGame}</color>");
 
             var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
             transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, "dtls"));
@@ -100,11 +119,10 @@ public class RelayManager : MonoBehaviour
     private void OnClientConnected(ulong clientId)
     {
         Debug.Log($"<color=green>¡CONECTADO! ID: {clientId}</color>");
-        Debug.Log($"<color=green>¡CODIGO DE UNION GENERADO: {joinCodeGame}</color>");
 
-        if (NetworkManager.Singleton.IsHost && NetworkManager.Singleton.ConnectedClients.Count >= 2)
+        if (NetworkManager.Singleton.IsHost && NetworkManager.Singleton.ConnectedClients.Count >= 4)
         {
-            //if (joinCodeText != null) joinCodeText.gameObject.SetActive(false);
+            if (joinCodeText != null) joinCodeText.gameObject.SetActive(false);
         }
     }
 }
