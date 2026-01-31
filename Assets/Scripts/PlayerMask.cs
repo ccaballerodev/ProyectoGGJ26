@@ -44,6 +44,8 @@ public class PlayerMask : NetworkBehaviour
         }
 
         Debug.Log($"Modelo actualizado a: {tipo} para el jugador {OwnerClientId}");
+
+        GetComponent<PlayerMovement>().RecargarAnimator();
     }
 
     private void DesactivarTodosLosModelos()
