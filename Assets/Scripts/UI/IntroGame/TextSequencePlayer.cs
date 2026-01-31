@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections;
 
 public class TextSequencePlayer : MonoBehaviour
 {
@@ -18,10 +19,37 @@ public class TextSequencePlayer : MonoBehaviour
     public UnityEvent OnSequenceFinished;
 
     private int index = 0;
+    private bool sequenceRunning = false;
 
-    private void Start()
+    private void OnEnable()
     {
-        Invoke(nameof(PlayLine), startDelay);
+        index = 0;
+        sequenceRunning = false;
+        StartCoroutine(WaitForTypewriterAndStart());
+    }
+
+    private IEnumerator WaitForTypewriterAndStart()
+    {
+        // Espera hasta que el typewriter esté activo en la jerarquía
+        while (typewriter == null || !typewriter.gameObject.activeInHierarchy)
+        {
+            yield return null; // espera un frame
+        }
+
+        // Espera startDelay adicional si quieres
+        if (startDelay > 0f)
+            yield return new WaitForSeconds(startDelay);
+
+        StartSequence();
+    }
+
+    private void StartSequence()
+    {
+        if (!sequenceRunning)
+        {
+            sequenceRunning = true;
+            PlayLine();
+        }
     }
 
     private void PlayLine()
@@ -54,6 +82,7 @@ public class TextSequencePlayer : MonoBehaviour
 
     private void FinishSequence()
     {
+        sequenceRunning = false;
         OnSequenceFinished?.Invoke();
     }
 }
