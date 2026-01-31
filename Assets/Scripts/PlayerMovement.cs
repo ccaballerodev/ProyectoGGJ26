@@ -19,7 +19,7 @@ public class PlayerMovement : NetworkBehaviour
     public LayerMask groundLayer;
 
     [Header("Configuración Idle Especial (AFK)")]
-    public float tiempoParaAburrirse = 5f;
+    public float tiempoParaAburrirse = 20f;
     private bool estaAburrido = false;
     private string myTimerID;
 
