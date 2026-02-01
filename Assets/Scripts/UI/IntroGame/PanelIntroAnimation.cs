@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 using UnityEngine.Events;
+using System.Collections;
 
 public class PanelIntroAnimation : MonoBehaviour
 {
@@ -28,7 +29,15 @@ public class PanelIntroAnimation : MonoBehaviour
     {
         PlayAudio();
         PrepareInitialState();
-        Invoke(nameof(PlayAnimation), animationDelay);
+        StartCoroutine(WaitAndPlay());
+    }
+
+    private IEnumerator WaitAndPlay()
+    {
+        if (animationDelay > 0)
+            yield return new WaitForSecondsRealtime(animationDelay);
+
+        PlayAnimation();
     }
 
     private void PlayAudio()
@@ -47,6 +56,7 @@ public class PanelIntroAnimation : MonoBehaviour
     private void PlayAnimation()
     {
         Sequence seq = DOTween.Sequence();
+        seq.SetUpdate(true);
         seq.Append(targetImage.DOFade(1f, duration).SetEase(Ease.OutQuad));
         seq.Join(targetImage.rectTransform
             .DOScale(originalScale, duration)
@@ -62,5 +72,6 @@ public class PanelIntroAnimation : MonoBehaviour
         CancelInvoke();
         DOTween.Kill(targetImage);
         DOTween.Kill(targetImage.rectTransform);
+        Time.timeScale = 1f;
     }
 }

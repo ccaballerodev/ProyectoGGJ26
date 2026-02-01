@@ -596,7 +596,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 397208332}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a32f6a3d256a0d54a89422f814dac939, type: 3}
   m_Name: 
@@ -624,7 +624,8 @@ MonoBehaviour:
     nameText: {fileID: 1628775365}
     container: {fileID: 513454604}
   btnIniciarJuego: {fileID: 2018394934}
-  sceneFade: {fileID: 0}
+  sceneFade: {fileID: 516424374}
+  panelToActivate: {fileID: 0}
 --- !u!114 &397208338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,7 +633,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 397208332}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
@@ -1357,7 +1358,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 612170774}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a32f6a3d256a0d54a89422f814dac939, type: 3}
   m_Name: 
@@ -1386,6 +1387,7 @@ MonoBehaviour:
     container: {fileID: 513454604}
   btnIniciarJuego: {fileID: 2018394934}
   sceneFade: {fileID: 516424374}
+  panelToActivate: {fileID: 1253524617}
 --- !u!114 &612170781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1393,7 +1395,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 612170774}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
@@ -4518,19 +4520,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2018394935}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 612170779}
-        m_TargetAssemblyTypeName: PanelFadeOutActivateNext, Assembly-CSharp
-        m_MethodName: FadeAndActivateNext
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &2018394935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4715,6 +4705,7 @@ GameObject:
   - component: {fileID: 2102543275}
   - component: {fileID: 2102543278}
   - component: {fileID: 2102543277}
+  - component: {fileID: 2102543279}
   m_Layer: 5
   m_Name: IntroPanel
   m_TagString: Untagged
@@ -4787,7 +4778,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2102543273}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 66b9a639644278644b6f95a35254adda, type: 3}
   m_Name: 
@@ -4806,6 +4797,20 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &2102543279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2102543273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dc945d1a8790ef4c8a2c0d8d8b01dd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PanelFadeOutTime
+  fadeDuration: 1.5
+  panelToActivate: {fileID: 0}
 --- !u!1 &2109469462
 GameObject:
   m_ObjectHideFlags: 0
