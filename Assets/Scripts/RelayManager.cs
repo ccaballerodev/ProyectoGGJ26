@@ -107,7 +107,7 @@ public class RelayManager : MonoBehaviour
             if (NetworkManager.Singleton.StartHost())
             {
                 // El Host cambia de escena y arrastra a los clientes
-                NetworkManager.Singleton.SceneManager.LoadScene("Testing", LoadSceneMode.Single);
+                NetworkManager.Singleton.SceneManager.LoadScene("InitScene", LoadSceneMode.Single);
             }
         }
         catch (Exception e) { Debug.LogError(e); }

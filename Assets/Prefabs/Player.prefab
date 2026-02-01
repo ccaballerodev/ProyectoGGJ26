@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 1004862251429637801}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.293, z: 0}
+  m_LocalPosition: {x: 0, y: 0.454, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -173,7 +173,7 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
-  tiempoParaAburrirse: 5
+  tiempoParaAburrirse: 20
 --- !u!114 &1466280878117097238
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,7 +225,7 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 0.9
+  m_Height: 0.8
   m_Radius: 0.3
   m_SlopeLimit: 45
   m_StepOffset: 0.3
@@ -252,7 +252,7 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.3
-  m_Height: 0.9
+  m_Height: 0.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.45, z: 0}
 --- !u!114 &1637254475370596921
@@ -355,6 +355,7 @@ GameObject:
   - component: {fileID: 8617435609616262610}
   - component: {fileID: 4560761208217184775}
   - component: {fileID: 7219296956304127284}
+  - component: {fileID: 4254915401350155411}
   m_Layer: 0
   m_Name: FreeLook Camera
   m_TagString: Untagged
@@ -581,6 +582,36 @@ MonoBehaviour:
         DecelTime: 0
   PlayerIndex: -1
   AutoEnableInputs: 1
+--- !u!114 &4254915401350155411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4968484155305346471}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca7de3aefa901374ba29464584a3109a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineDecollider
+  CameraRadius: 0.4
+  Decollision:
+    Enabled: 0
+    ObstacleLayers:
+      serializedVersion: 2
+      m_Bits: 1
+    UseFollowTarget:
+      Enabled: 0
+      YOffset: 0
+    Damping: 0.5
+    SmoothingTime: 0
+  TerrainResolution:
+    Enabled: 1
+    TerrainLayers:
+      serializedVersion: 2
+      m_Bits: 1
+    MaximumRaycast: 10
+    Damping: 0.5
 --- !u!1 &8735577928266877992
 GameObject:
   m_ObjectHideFlags: 0
@@ -914,7 +945,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 260656849197038504, guid: 08cd8ebb30e079b41b93e6619312d961, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 636655343372935442, guid: 08cd8ebb30e079b41b93e6619312d961, type: 3}
       propertyPath: m_LocalPosition.x

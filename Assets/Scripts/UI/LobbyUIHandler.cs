@@ -36,6 +36,9 @@ public class LobbyUIHandler : NetworkBehaviour
 
     [SerializeField] private GameObject panelToActivate;
 
+    [Header("Posicionamiento Final")]
+    [SerializeField] private Transform[] spawnPointsPartida;
+
     private void Start()
     {
         Time.timeScale = 0f;
@@ -135,7 +138,6 @@ public class LobbyUIHandler : NetworkBehaviour
 
     private void PresionarBotonIniciar()
     {
-        // Solo el servidor/host tiene autoridad para llamar al RPC
         if (IsHost)
         {
             IniciarJuegoClientRpc();
@@ -145,28 +147,48 @@ public class LobbyUIHandler : NetworkBehaviour
     [ClientRpc]
     private void IniciarJuegoClientRpc()
     {
-        CanvasGroup cg = GetComponent<CanvasGroup>();
+        AcomodarJugadoresEnSpawns();
 
+        CanvasGroup cg = GetComponent<CanvasGroup>();
         if (cg != null)
         {
-            cg.DOFade(0f, 0.5f) 
+            cg.DOFade(0f, 0.5f)
                 .SetEase(Ease.InOutSine)
-                .SetUpdate(true) 
+                .SetUpdate(true)
                 .OnComplete(() =>
                 {
                     gameObject.SetActive(false);
-
-
                     if (panelToActivate != null)
                         panelToActivate.SetActive(true);
-
-                    //Time.timeScale = 1f;
                 });
         }
         else
         {
-            //Time.timeScale = 1f;
             gameObject.SetActive(false);
+        }
+    }
+
+    private void AcomodarJugadoresEnSpawns()
+    {
+        PlayerMask[] todosLosJugadores = GameObject.FindObjectsOfType<PlayerMask>();
+
+        foreach (PlayerMask jugador in todosLosJugadores)
+        {
+            int id = (int)jugador.OwnerClientId;
+
+            if (id >= 0 && id < spawnPointsPartida.Length)
+            {
+                var controller = jugador.GetComponent<CharacterController>();
+                if (controller != null) controller.enabled = false;
+
+                // Teletransporte
+                jugador.transform.position = spawnPointsPartida[id].position;
+                jugador.transform.rotation = spawnPointsPartida[id].rotation;
+
+                if (controller != null) controller.enabled = true;
+
+                Debug.Log($"Jugador {id} posicionado en el spawn {id}");
+            }
         }
     }
 
