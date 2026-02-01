@@ -15,14 +15,21 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
     [Header("Input (New Input System)")]
     [SerializeField] private Key grabKey = Key.F;
 
+    [Header("Animator & Layers")]
+    [SerializeField] private Animator characterAnimator;
+    [SerializeField] private string grabParameterName = "Grab";
+    [SerializeField] private int layerWhileHeld = 2; // Default 2 es "Ignore Raycast"
+
+    [Header("Settings")]
+    [SerializeField] private Vector3 holdOffset = new Vector3(0, 0.2f, 0); // Ejemplo: sube 0.5 unidades
+
     [Header("Behavior")]
-    [SerializeField] private bool destroyWorldObjectOnPickup = true;
     [SerializeField] private bool logDebug = true;
 
     private InputAction grabAction;
-
     private GameObject heldInstance;
     private Rigidbody heldRb;
+    private int originalLayer;
 
     public bool HasHeldObject => heldInstance != null;
     public Rigidbody HeldRigidbody => heldRb;
@@ -32,6 +39,7 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
         if (holdPoint == null)
             Debug.LogError("[GrabSpawnPrefab] Asigna holdPoint en el Inspector.");
 
+        // Configuración del input manual
         grabAction = new InputAction("Grab", binding: $"<Keyboard>/{grabKey}");
     }
 
@@ -50,7 +58,7 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
     private void OnGrabPerformed(InputAction.CallbackContext ctx)
     {
         if (!HasHeldObject) TryPickup();
-        else DropAndDestroy(); // drop “normal”: si quieres, puede soltarlo en vez de destruirlo
+        else DropObject();
     }
 
     private void TryPickup()
@@ -58,19 +66,20 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
         Collider[] hits = Physics.OverlapSphere(transform.position, pickupRadius, pickupMask, QueryTriggerInteraction.Ignore);
 
         if (logDebug)
-            Debug.Log($"[GrabSpawnPrefab] Overlap hits={hits.Length} radius={pickupRadius} mask={pickupMask.value}");
+            Debug.Log($"[GrabSpawnPrefab] Hits encontrados: {hits.Length}");
 
-        SpawnedFromPrefab bestMarker = null;
+        GameObject bestObject = null;
         float bestScore = float.PositiveInfinity;
 
         for (int i = 0; i < hits.Length; i++)
         {
-            var marker = hits[i].GetComponentInParent<SpawnedFromPrefab>();
-            if (marker == null || marker.sourcePrefab == null) continue;
+            // Buscamos el Rigidbody en el objeto o sus padres
+            Rigidbody targetRb = hits[i].attachedRigidbody;
+            if (targetRb == null) continue;
 
-            Transform targetT = marker.transform;
+            Transform targetT = targetRb.transform;
 
-            // filtro “al frente”
+            // Filtro para agarrar solo lo que está frente al jugador
             if (forwardDotThreshold > 0f)
             {
                 Vector3 to = targetT.position - transform.position;
@@ -86,119 +95,84 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
             if (dist < bestScore)
             {
                 bestScore = dist;
-                bestMarker = marker;
+                bestObject = targetRb.gameObject;
             }
         }
 
-        if (bestMarker == null)
+        if (bestObject != null)
         {
-            if (logDebug) Debug.Log("[GrabSpawnPrefab] No encontré objetos con SpawnedFromPrefab en rango.");
-            return;
-        }
-
-        // ? Instanciar el prefab en la mano
-        SpawnInHand(bestMarker.sourcePrefab);
-
-        // (opcional) destruir el del mundo
-        if (destroyWorldObjectOnPickup)
-        {
-            if (logDebug) Debug.Log($"[GrabSpawnPrefab] Destruyendo world object '{bestMarker.gameObject.name}'");
-            Destroy(bestMarker.gameObject);
+            PickupObject(bestObject);
         }
     }
 
-    private void SpawnInHand(GameObject prefab)
+    private void PickupObject(GameObject obj)
     {
-        heldInstance = Instantiate(prefab, holdPoint.position, holdPoint.rotation);
-        heldInstance.transform.SetParent(holdPoint, worldPositionStays: true);
-        heldInstance.transform.localPosition = Vector3.zero;
+        heldInstance = obj;
+        heldRb = obj.GetComponent<Rigidbody>();
+        originalLayer = obj.layer;
+
+        // 1. Emparentar al punto de la mano
+        heldInstance.transform.SetParent(holdPoint);
+        heldInstance.transform.localPosition = holdOffset;
         heldInstance.transform.localRotation = Quaternion.identity;
 
-        heldRb = heldInstance.GetComponent<Rigidbody>();
+        // 2. Desactivar física para que no pese mientras lo llevas
         if (heldRb != null)
         {
-            // Primero asegúrate que está simulando para poder tocar velocidades sin warning
-            heldRb.isKinematic = false;
-            heldRb.useGravity = false;
-
-#if UNITY_6000_0_OR_NEWER
-            heldRb.linearVelocity = Vector3.zero;
-#else
-    heldRb.velocity = Vector3.zero;
-#endif
-            heldRb.angularVelocity = Vector3.zero;
-
-            // Ahora sí, lo vuelves kinematic para que quede “pegado” al HoldPoint
             heldRb.isKinematic = true;
-        }
-        heldRb = heldInstance.GetComponent<Rigidbody>();
-        if (heldRb != null)
-        {
-            // Primero asegúrate que está simulando para poder tocar velocidades sin warning
-            heldRb.isKinematic = false;
             heldRb.useGravity = false;
-
-#if UNITY_6000_0_OR_NEWER
-            heldRb.linearVelocity = Vector3.zero;
-#else
-    heldRb.velocity = Vector3.zero;
-#endif
-            heldRb.angularVelocity = Vector3.zero;
-
-            // Ahora sí, lo vuelves kinematic para que quede “pegado” al HoldPoint
-            heldRb.isKinematic = true;
         }
 
+        // 3. Cambiar Layer y activar bool en el Animator
+        heldInstance.layer = layerWhileHeld;
+        if (characterAnimator != null) characterAnimator.SetBool(grabParameterName, true);
 
-        if (logDebug) Debug.Log($"[GrabSpawnPrefab] Instanciado en mano: '{heldInstance.name}' desde prefab '{prefab.name}'");
+        if (logDebug) Debug.Log($"[GrabSpawnPrefab] Agarrado: {obj.name}");
     }
 
-    // Drop normal (si no te interesa dejarlo tirado, lo destruyes)
-    public void DropAndDestroy()
+    public void DropObject()
     {
         if (!HasHeldObject) return;
 
-        if (logDebug) Debug.Log($"[GrabSpawnPrefab] DropAndDestroy '{heldInstance.name}'");
+        if (logDebug) Debug.Log($"[GrabSpawnPrefab] Soltando '{heldInstance.name}'");
 
-        Destroy(heldInstance);
+        // 1. Liberar el objeto
+        heldInstance.transform.SetParent(null);
+
+        // 2. Devolver física para que caiga al suelo
+        if (heldRb != null)
+        {
+            heldRb.isKinematic = false;
+            heldRb.useGravity = true;
+
+            // Un pequeño impulso para que no se quede pegado al jugador
+            heldRb.AddForce(transform.forward * 1.5f, ForceMode.Impulse);
+        }
+
+        // 3. Restaurar Layer original y apagar el bool del Animator
+        heldInstance.layer = originalLayer;
+        if (characterAnimator != null) characterAnimator.SetBool(grabParameterName, false);
+
         heldInstance = null;
         heldRb = null;
     }
 
-    /// <summary>
-    /// Esto lo usará tu habilidad única para lanzar.
-    /// Suelta el objeto de la mano y lo deja listo para física.
-    /// </summary>
+    // Útil para habilidades de lanzamiento externas
     public Rigidbody ReleaseForThrow(bool forceGravity = true)
     {
         if (!HasHeldObject) return null;
 
-        heldInstance.transform.SetParent(null, worldPositionStays: true);
-
-        if (heldRb != null)
-        {
-            heldRb.isKinematic = false;
-            heldRb.useGravity = forceGravity;
-
-#if UNITY_6000_0_OR_NEWER
-            heldRb.linearVelocity = Vector3.zero;
-#else
-            heldRb.velocity = Vector3.zero;
-#endif
-            heldRb.angularVelocity = Vector3.zero;
-        }
-
         Rigidbody rb = heldRb;
+        DropObject(); // Usamos la lógica de soltar para limpiar todo
 
-        heldInstance = null;
-        heldRb = null;
-
+        if (rb != null) rb.useGravity = forceGravity;
         return rb;
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
+        Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, pickupRadius);
     }
 #endif

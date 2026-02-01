@@ -165,7 +165,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   ShowTopMostFoldoutHeaderGroup: 1
-  speed: 5
+  speed: 3
   rotationSpeed: 10
   jumpForce: 5
   gravity: -9.81
@@ -225,10 +225,10 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 0.8
+  m_Height: 0.7
   m_Radius: 0.3
   m_SlopeLimit: 45
-  m_StepOffset: 0.3
+  m_StepOffset: 0.1
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.45, z: 0}
@@ -252,7 +252,7 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.3
-  m_Height: 0.8
+  m_Height: 0.7
   m_Direction: 1
   m_Center: {x: 0, y: 0.45, z: 0}
 --- !u!114 &1637254475370596921
@@ -267,15 +267,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b8d517f142032b419a9fb9462a6f4ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerGrabOverlapSpawnPrefab
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerMovement: {fileID: -5563446393176871983}
   holdPoint: {fileID: 3440293507053445148}
   pickupRadius: 2
   pickupMask:
     serializedVersion: 2
-    m_Bits: 8
-  forwardDotThreshold: 0.2
+    m_Bits: 128
   grabKey: 20
-  destroyWorldObjectOnPickup: 1
-  logDebug: 1
+  layerWhileHeld: 2
 --- !u!114 &6245878544240203836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -945,7 +945,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 260656849197038504, guid: 08cd8ebb30e079b41b93e6619312d961, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 636655343372935442, guid: 08cd8ebb30e079b41b93e6619312d961, type: 3}
       propertyPath: m_LocalPosition.x

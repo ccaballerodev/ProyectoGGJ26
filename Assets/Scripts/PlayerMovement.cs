@@ -14,6 +14,8 @@ public class PlayerMovement : NetworkBehaviour
     public float jumpForce = 6f;
     public float gravity = -18f;
 
+    private PlayerGrabOverlapSpawnPrefab grabScript;
+
     [Header("Detección de Suelo (Raycast)")]
     public float groundCheckDistance = 0.3f;
     public LayerMask groundLayer;
@@ -33,6 +35,7 @@ public class PlayerMovement : NetworkBehaviour
     private NetworkVariable<bool> netIsDancing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private NetworkVariable<bool> netIsHi = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private NetworkVariable<bool> netIsAgarraNalga = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsGrabbing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private float verticalVelocity;
     private bool isGrounded;
@@ -138,6 +141,12 @@ public class PlayerMovement : NetworkBehaviour
             netIsGrounded.Value = isGrounded;
             netIsFalling.Value = isFalling;
             netEstaAburrido.Value = estaAburrido;
+
+            if (grabScript == null) grabScript = GetComponent<PlayerGrabOverlapSpawnPrefab>();
+            if (grabScript != null)
+            {
+                netIsGrabbing.Value = grabScript.HasHeldObject;
+            }
         }
 
         // ESTO LO EJECUTAN TODOS (Dueño y los demás)
@@ -206,6 +215,21 @@ public class PlayerMovement : NetworkBehaviour
             if (animator == null) return;
         }
 
+        // 3. CONTROL DEL LAYER "GRAB" (Basado en tu captura image_25487f.png)
+        int grabLayerIndex = animator.GetLayerIndex("Grab");
+        if (grabLayerIndex != -1)
+        {
+            // Si netIsGrabbing es true, subimos el peso a 1. Si es false, a 0.
+            float targetWeight = netIsGrabbing.Value ? 1f : 0f;
+            float currentWeight = animator.GetLayerWeight(grabLayerIndex);
+
+            // Usamos Lerp para que los brazos no salten de golpe, sino que se posicionen suavemente
+            animator.SetLayerWeight(grabLayerIndex, Mathf.Lerp(currentWeight, targetWeight, Time.deltaTime * 10f));
+        }
+
+        // 4. ACTUALIZAR EL PARÁMETRO BOOL "Grab" (image_254843.png)
+        animator.SetBool("Grab", netIsGrabbing.Value);
+
         float mag = netMoveMagnitude.Value;
         bool grounded = netIsGrounded.Value;
         bool aburrido = netEstaAburrido.Value;
@@ -218,7 +242,6 @@ public class PlayerMovement : NetworkBehaviour
             netIsAgarraNalga.Value = false;
         }
 
-        // Estados base
         animator.SetBool("Idle", mag <= 0.1f && grounded && !aburrido);
         animator.SetBool("Jog", mag > 0.1f && grounded);
         animator.SetBool("Jump", netIsJumping.Value);
