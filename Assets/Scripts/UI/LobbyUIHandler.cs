@@ -1,6 +1,8 @@
+using DG.Tweening;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -29,11 +31,10 @@ public class LobbyUIHandler : NetworkBehaviour
     [Header("Control del Host")]
     [SerializeField] private Button btnIniciarJuego;
 
-    private GameObject objPreGame;
-    public static bool objPreGameisActive;
-
     [Header("Navegación")]
     [SerializeField] private SceneFade sceneFade;
+
+    [SerializeField] private GameObject panelToActivate;
 
     private void Start()
     {
@@ -42,13 +43,16 @@ public class LobbyUIHandler : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Solo el Host activa el botón en su pantalla
+        if (btnIniciarJuego != null) btnIniciarJuego.gameObject.SetActive(false);
+
+        // Segundo: Solo el Host lo enciende
         if (IsHost && btnIniciarJuego != null)
         {
             btnIniciarJuego.gameObject.SetActive(true);
             btnIniciarJuego.interactable = false;
 
-            // Asignamos la función al botón por código por seguridad
+            // Limpiamos y re-asignamos el listener para evitar duplicados
+            btnIniciarJuego.onClick.RemoveAllListeners();
             btnIniciarJuego.onClick.AddListener(PresionarBotonIniciar);
         }
     }
@@ -77,8 +81,6 @@ public class LobbyUIHandler : NetworkBehaviour
         {
             ActualizarInterfazLobby();
         }
-
-        
     }
 
     private void ActualizarInterfazLobby()
@@ -143,14 +145,29 @@ public class LobbyUIHandler : NetworkBehaviour
     [ClientRpc]
     private void IniciarJuegoClientRpc()
     {
-        // Esta línea se ejecuta en TODOS los jugadores conectados
-        Time.timeScale = 1f;
+        CanvasGroup cg = GetComponent<CanvasGroup>();
 
-        // Aquí puedes poner tu lógica de "quitar la UI de lobby"
-        Debug.Log("Sincronización de inicio recibida por todos.");
+        if (cg != null)
+        {
+            cg.DOFade(0f, 0.5f) 
+                .SetEase(Ease.InOutSine)
+                .SetUpdate(true) 
+                .OnComplete(() =>
+                {
+                    gameObject.SetActive(false);
 
-        // Si tienes el Canvas del lobby en una variable, podrías hacer:
-        // lobbyCanvas.SetActive(false);
+
+                    if (panelToActivate != null)
+                        panelToActivate.SetActive(true);
+
+                    //Time.timeScale = 1f;
+                });
+        }
+        else
+        {
+            //Time.timeScale = 1f;
+            gameObject.SetActive(false);
+        }
     }
 
     private MascaraData BuscarDatosMascara(MaskType tipo)

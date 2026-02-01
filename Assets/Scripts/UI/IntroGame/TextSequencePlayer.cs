@@ -38,7 +38,7 @@ public class TextSequencePlayer : MonoBehaviour
 
         // Espera startDelay adicional si quieres
         if (startDelay > 0f)
-            yield return new WaitForSeconds(startDelay);
+            yield return new WaitForSecondsRealtime(startDelay);
 
         StartSequence();
     }
@@ -62,16 +62,28 @@ public class TextSequencePlayer : MonoBehaviour
 
         typewriter.PlayLine(sequence.lines[index], () =>
         {
-            Invoke(nameof(EraseLine), holdAfterWrite);
+            StartCoroutine(WaitAndErase());
         });
+    }
+
+    private IEnumerator WaitAndErase()
+    {
+        yield return new WaitForSecondsRealtime(holdAfterWrite);
+        EraseLine();
     }
 
     private void EraseLine()
     {
         typewriter.ReverseLine(() =>
         {
-            Invoke(nameof(Advance), holdAfterErase);
+            StartCoroutine(WaitAndAdvance());
         });
+    }
+
+    private IEnumerator WaitAndAdvance()
+    {
+        yield return new WaitForSecondsRealtime(holdAfterErase);
+        Advance();
     }
 
     private void Advance()
