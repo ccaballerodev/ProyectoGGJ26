@@ -50,6 +50,7 @@ public class SceneFade : MonoBehaviour
         seq.Append(
             canvasGroup.DOFade(1f, fadeDuration)
                 .SetEase(Ease.InOutSine)
+                .SetUpdate(true)
         );
 
         // Carga escena

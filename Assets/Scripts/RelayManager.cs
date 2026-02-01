@@ -32,8 +32,27 @@ public class RelayManager : MonoBehaviour
             NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
 
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
         catch (Exception e) { Debug.LogError("Error en Inicialización: " + e.Message); }
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (!NetworkManager.Singleton.IsServer && clientId == NetworkManager.Singleton.LocalClientId ||
+            !NetworkManager.Singleton.IsServer && clientId == NetworkManager.ServerClientId)
+        {
+            Debug.Log("<color=red>Desconectado del servidor o el Host cerró la partida.</color>");
+            LimpiarYRegresarAlMenu();
+        }
+    }
+
+    private void LimpiarYRegresarAlMenu()
+    {
+        if (NetworkManager.Singleton != null) NetworkManager.Singleton.Shutdown();
+
+        Time.timeScale = 1f; 
+        SceneManager.LoadScene("MainMenu"); 
     }
 
     private void OnEnable()
@@ -44,6 +63,8 @@ public class RelayManager : MonoBehaviour
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= AlCargarEscena;
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
     }
 
     private void AlCargarEscena(Scene scene, LoadSceneMode mode)
@@ -64,7 +85,10 @@ public class RelayManager : MonoBehaviour
     private void OnDestroy()
     {
         if (NetworkManager.Singleton != null)
+        {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
     }
 
     public async void Host()

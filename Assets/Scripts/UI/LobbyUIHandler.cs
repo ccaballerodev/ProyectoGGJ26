@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
-using Unity.Netcode;
-using TMPro;
 using System.Collections.Generic;
+using TMPro;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class LobbyUIHandler : NetworkBehaviour
 {
@@ -31,6 +32,9 @@ public class LobbyUIHandler : NetworkBehaviour
     private GameObject objPreGame;
     public static bool objPreGameisActive;
 
+    [Header("Navegación")]
+    [SerializeField] private SceneFade sceneFade;
+
     private void Start()
     {
         Time.timeScale = 0f;
@@ -49,6 +53,24 @@ public class LobbyUIHandler : NetworkBehaviour
         }
     }
 
+    public void AbandonarPartida()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        Time.timeScale = 1f;
+
+        if (sceneFade != null)
+        {
+            sceneFade.LoadScene("MainMenu"); 
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
     void Update()
     {
         if (NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
