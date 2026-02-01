@@ -3,6 +3,9 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class PlatformRecoveryZone : MonoBehaviour, IAbilityUsable
 {
+    [Header("Mask requerida")]
+    [SerializeField] private MaskType requiredMask = MaskType.Mascara2;
+
     [Header("Referencias")]
     [SerializeField] private FallingPlatform platform;
     [SerializeField] private FallingPlatformTrigger fallTriggerToReset;
@@ -11,6 +14,7 @@ public class PlatformRecoveryZone : MonoBehaviour, IAbilityUsable
     [SerializeField] private bool recoverOnEnter = false;
 
     private bool playerInsideZone = false;
+    private PlayerMaskState playerMask;
 
     private void Awake()
     {
@@ -18,9 +22,6 @@ public class PlatformRecoveryZone : MonoBehaviour, IAbilityUsable
 
         if (platform == null)
             Debug.LogError("[PlatformRecoveryZone] Falta referencia a 'platform'.");
-
-        if (fallTriggerToReset == null)
-            Debug.LogWarning("[PlatformRecoveryZone] No asignaste 'fallTriggerToReset' (opcional pero recomendado).");
     }
 
     private void OnTriggerEnter(Collider other)
@@ -28,6 +29,7 @@ public class PlatformRecoveryZone : MonoBehaviour, IAbilityUsable
         if (!other.transform.root.CompareTag("Player")) return;
 
         playerInsideZone = true;
+        playerMask = other.transform.root.GetComponent<PlayerMaskState>();
 
         if (recoverOnEnter)
             UseAbility();
@@ -37,14 +39,18 @@ public class PlatformRecoveryZone : MonoBehaviour, IAbilityUsable
     {
         if (!other.transform.root.CompareTag("Player")) return;
         playerInsideZone = false;
+        playerMask = null;
     }
 
-    // ? Implementación de interfaz: lo llama tu habilidad o el tester genérico
     public void UseAbility()
     {
-        if (!playerInsideZone) return;   // solo funciona dentro de la zona
+        if (!playerInsideZone) return;
+
+        if (playerMask == null || playerMask.currentMask != requiredMask)
+            return;
+
         if (platform == null) return;
-        if (!platform.IsFallen) return;  // opcional
+        if (!platform.IsFallen) return;
 
         platform.ReturnToStart();
 

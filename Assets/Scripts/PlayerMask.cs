@@ -17,12 +17,35 @@ public class PlayerMask : NetworkBehaviour
     [SerializeField] private GameObject model3;
     [SerializeField] private GameObject model4;
 
+    // ? Cache del state
+    private PlayerMaskState maskState;
+
     public override void OnNetworkSpawn()
     {
-        assignedMask.OnValueChanged += (oldVal, newVal) => ActualizarModelo(newVal);
+        // ? Obtener state en el mismo player
+        maskState = GetComponent<PlayerMaskState>();
 
+        assignedMask.OnValueChanged += OnMaskChanged;
+
+        // aplicar estado inicial
         if (assignedMask.Value != MaskType.Ninguna) ActualizarModelo(assignedMask.Value);
-        else DesactivarTodosLosModelos();
+        else
+        {
+            DesactivarTodosLosModelos();
+            // ? sincronizar state
+            if (maskState != null) maskState.currentMask = MaskType.Ninguna;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        assignedMask.OnValueChanged -= OnMaskChanged;
+    }
+
+    // ? handler para poder desuscribir
+    private void OnMaskChanged(MaskType oldVal, MaskType newVal)
+    {
+        ActualizarModelo(newVal);
     }
 
     private void ActualizarModelo(MaskType tipo)
@@ -37,8 +60,11 @@ public class PlayerMask : NetworkBehaviour
             case MaskType.Mascara4: if (model4) model4.SetActive(true); break;
         }
 
-        // IMPORTANTE: Avisar al movimiento que el Animator ha cambiado
-        // Lo hacemos con un pequeño retraso o frame para que SetActive surta efecto
+        // ? 1) Sincronizar el PlayerMaskState SIEMPRE que cambia la máscara
+        if (maskState != null)
+            maskState.currentMask = tipo;
+
+        // ? 2) Notificar animator igual que antes
         Invoke(nameof(NotificarCambioAnimator), 0.05f);
     }
 

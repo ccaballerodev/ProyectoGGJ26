@@ -3,6 +3,9 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 {
+    [Header("Mask requerida")]
+    [SerializeField] private MaskType requiredMask = MaskType.Mascara1;
+
     [Header("Pulse Prefab")]
     [SerializeField] private FreezePulse pulsePrefab;
 
@@ -13,7 +16,7 @@ public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 
     [Header("Spawn")]
     [SerializeField] private bool spawnAtPlayer = true;
-    [SerializeField] private Transform pulseSpawnPoint; // opcional
+    [SerializeField] private Transform pulseSpawnPoint;
 
     [Header("Cooldown")]
     [SerializeField] private float cooldownSeconds = 3f;
@@ -24,19 +27,16 @@ public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 
     private bool playerInside = false;
     private Transform playerRoot;
+    private PlayerMaskState playerMask;
 
     private float nextReadyTime = 0f;
 
     private void Awake()
     {
-        var col = GetComponent<Collider>();
-        col.isTrigger = true;
+        GetComponent<Collider>().isTrigger = true;
 
         if (pulsePrefab == null)
             Debug.LogError("[FreezeAllowedZone] Falta asignar pulsePrefab.");
-
-        if (logDebug)
-            Debug.Log($"[FreezeAllowedZone] Awake. cooldown={cooldownSeconds}, spawnAtPlayer={spawnAtPlayer}, maskValue={trashMask.value}");
     }
 
     private void OnTriggerEnter(Collider other)
@@ -45,9 +45,10 @@ public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 
         playerInside = true;
         playerRoot = other.transform.root;
+        playerMask = playerRoot.GetComponent<PlayerMaskState>();
 
-        if (logDebug)
-            Debug.Log($"[FreezeAllowedZone] Player ENTER zone. root='{playerRoot.name}'");
+        if (logDebug) Debug.Log($"[FreezeAllowedZone] Player ENTER zone. root='{playerRoot.name}'");
+        if (playerMask == null && logDebug) Debug.LogWarning("[FreezeAllowedZone] Player no tiene PlayerMaskState.");
     }
 
     private void OnTriggerExit(Collider other)
@@ -56,9 +57,9 @@ public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 
         playerInside = false;
         playerRoot = null;
+        playerMask = null;
 
-        if (logDebug)
-            Debug.Log("[FreezeAllowedZone] Player EXIT zone.");
+        if (logDebug) Debug.Log("[FreezeAllowedZone] Player EXIT zone.");
     }
 
     public float GetRemainingCooldown()
@@ -73,41 +74,34 @@ public class FreezeAllowedZone : MonoBehaviour, IAbilityUsable
 
         if (!playerInside)
         {
-            if (logDebug) Debug.Log("[FreezeAllowedZone] UseAbility ignorado: fuera de la zona permitida.");
+            if (logDebug) Debug.Log("[FreezeAllowedZone] Ignorado: fuera de zona.");
+            return;
+        }
+
+        if (playerMask == null || playerMask.currentMask != requiredMask)
+        {
+            if (logDebug) Debug.Log($"[FreezeAllowedZone] Ignorado por máscara. Necesita {requiredMask}, tiene {(playerMask ? playerMask.currentMask : MaskType.Ninguna)}");
             return;
         }
 
         if (now < nextReadyTime)
         {
-            if (logDebug)
-                Debug.Log($"[FreezeAllowedZone] En cooldown. Falta: {GetRemainingCooldown():0.00}s");
+            if (logDebug) Debug.Log($"[FreezeAllowedZone] Cooldown: {GetRemainingCooldown():0.00}s");
             return;
         }
 
-        if (pulsePrefab == null)
-        {
-            Debug.LogError("[FreezeAllowedZone] No hay pulsePrefab asignado.");
-            return;
-        }
+        if (pulsePrefab == null) return;
 
         Vector3 spawnPos;
-
-        if (!spawnAtPlayer && pulseSpawnPoint != null)
-            spawnPos = pulseSpawnPoint.position;
-        else if (playerRoot != null)
-            spawnPos = playerRoot.position;
-        else
-            spawnPos = transform.position;
-
-        if (logDebug)
-            Debug.Log($"[FreezeAllowedZone] UseAbility OK. Instanciando pulso en {spawnPos} | radius={pulseRadius} dur={freezeDuration} maskValue={trashMask.value}");
+        if (!spawnAtPlayer && pulseSpawnPoint != null) spawnPos = pulseSpawnPoint.position;
+        else if (playerRoot != null) spawnPos = playerRoot.position;
+        else spawnPos = transform.position;
 
         var pulse = Instantiate(pulsePrefab, spawnPos, Quaternion.identity);
         pulse.Init(pulseRadius, freezeDuration, trashMask);
 
         nextReadyTime = now + cooldownSeconds;
 
-        if (logDebug)
-            Debug.Log($"[FreezeAllowedZone] Cooldown iniciado: {cooldownSeconds:0.00}s");
+        if (logDebug) Debug.Log("[FreezeAllowedZone] OK: FreezePulse instanciado.");
     }
 }

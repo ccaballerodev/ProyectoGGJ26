@@ -1,65 +1,144 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Globalization;
 
 public class AbilityTesterPC_Generic : MonoBehaviour
 {
     [Header("PC Key (New Input System)")]
-    [SerializeField] private Key testKey = Key.E;
+    [SerializeField] private Key key = Key.E;
 
-    [Header("Opcional")]
-    [SerializeField] private bool includeInactive = false; // si quieres incluir objetos desactivados
+    [Header("Tap vs Hold (misma tecla)")]
+    [SerializeField] private float tapMaxDuration = 0.20f;
+    [SerializeField] private float holdRequiredTime = 0.75f;
 
-    private InputAction testAction;
+    [Header("Broadcast (Tap): UseAbility()")]
+    [SerializeField] private bool includeInactive = false;
+
+    [Header("Hold receivers (opcional)")]
+    [Tooltip("Si lo dejas vacío, hará broadcast buscando receptores en escena.")]
+    [SerializeField] private MonoBehaviour[] holdReceivers;
+
+    [Header("Debug")]
+    [SerializeField] private bool logDebug = true;
+
+    private InputAction tapAction;
+    private InputAction holdAction;
 
     private void Awake()
     {
-        testAction = new InputAction(
-            name: "TestAllAbilities",
+        string keyPath = $"<Keyboard>/{key.ToString().ToLower()}";
+
+        // ? Formato Invariant (siempre usa punto decimal)
+        string tapDur = tapMaxDuration.ToString(CultureInfo.InvariantCulture);
+        string holdDur = holdRequiredTime.ToString(CultureInfo.InvariantCulture);
+
+        tapAction = new InputAction(
+            name: "TestAllAbilities_Tap",
             type: InputActionType.Button,
-            binding: $"<Keyboard>/{testKey.ToString().ToLower()}"
+            binding: keyPath,
+            interactions: $"Tap(duration={tapDur})"
+        );
+
+        holdAction = new InputAction(
+            name: "AbilityHold",
+            type: InputActionType.Button,
+            binding: keyPath,
+            interactions: $"Hold(duration={holdDur})"
         );
     }
 
     private void OnEnable()
     {
-        testAction.performed += OnTestPerformed;
-        testAction.Enable();
+        tapAction.performed += OnTapPerformed;
+        tapAction.Enable();
+
+        holdAction.performed += OnHoldPerformed;
+        holdAction.canceled += OnHoldCanceled;
+        holdAction.Enable();
     }
 
     private void OnDisable()
     {
-        testAction.performed -= OnTestPerformed;
-        testAction.Disable();
+        tapAction.performed -= OnTapPerformed;
+        tapAction.Disable();
+
+        holdAction.performed -= OnHoldPerformed;
+        holdAction.canceled -= OnHoldCanceled;
+        holdAction.Disable();
     }
 
     private void OnDestroy()
     {
-        testAction?.Dispose();
+        tapAction?.Dispose();
+        holdAction?.Dispose();
     }
 
-    private void OnTestPerformed(InputAction.CallbackContext ctx)
+    private void OnTapPerformed(InputAction.CallbackContext ctx)
     {
         int count = 0;
 
-        // Activos por defecto (más rápido y suficiente casi siempre)
         var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-
         foreach (var b in behaviours)
         {
             if (b == null) continue;
-
-            // Si quieres incluir inactivos, esto solo funcionará si el objeto está activo en jerarquía.
-            // Para verdaderamente incluir inactivos, mira el bloque alternativo debajo.
             if (!includeInactive && !b.isActiveAndEnabled) continue;
 
             if (b is IAbilityUsable usable)
             {
                 count++;
-                Debug.Log($"[AbilityTester] UseAbility() -> {b.gameObject.name} ({b.GetType().Name})");
+                if (logDebug)
+                    Debug.Log($"[AbilityTester TAP] UseAbility() -> {b.gameObject.name} ({b.GetType().Name})");
                 usable.UseAbility();
             }
         }
 
-        Debug.Log($"[AbilityTester] Total UseAbility ejecutados: {count}");
+        if (logDebug) Debug.Log($"[AbilityTester TAP] Total UseAbility ejecutados: {count}");
+    }
+
+    private void OnHoldCanceled(InputAction.CallbackContext ctx)
+    {
+        if (logDebug)
+            Debug.Log("[AbilityTester HOLD] CANCELED (soltó antes) -> NO envía mensaje");
+    }
+
+    private void OnHoldPerformed(InputAction.CallbackContext ctx)
+    {
+        if (logDebug)
+            Debug.Log($"[AbilityTester HOLD] PERFORMED -> enviando mensaje a receptores");
+
+        if (holdReceivers != null && holdReceivers.Length > 0)
+        {
+            int sent = 0;
+            foreach (var r in holdReceivers)
+            {
+                if (r == null) continue;
+                if (r is IAbilityHoldReceiver receiver)
+                {
+                    sent++;
+                    if (logDebug) Debug.Log($"[AbilityTester HOLD] -> {r.gameObject.name} ({r.GetType().Name})");
+                    receiver.OnAbilityHold();
+                }
+            }
+            if (logDebug) Debug.Log($"[AbilityTester HOLD] Mensajes enviados: {sent}");
+            return;
+        }
+
+        // fallback: broadcast
+        int count = 0;
+        var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        foreach (var b in behaviours)
+        {
+            if (b == null) continue;
+            if (!includeInactive && !b.isActiveAndEnabled) continue;
+
+            if (b is IAbilityHoldReceiver receiver)
+            {
+                count++;
+                if (logDebug) Debug.Log($"[AbilityTester HOLD] -> {b.gameObject.name} ({b.GetType().Name})");
+                receiver.OnAbilityHold();
+            }
+        }
+
+        if (logDebug) Debug.Log($"[AbilityTester HOLD] Total receptores notificados: {count}");
     }
 }

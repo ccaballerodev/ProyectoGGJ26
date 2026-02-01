@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -9158656100964916926}
   - component: {fileID: 2457278081737689494}
   - component: {fileID: 4176612615761584174}
+  - component: {fileID: 1791438083117170012}
   m_Layer: 3
   m_Name: FanObject
   m_TagString: Untagged
@@ -141,7 +142,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &2457278081737689494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,3 +170,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpawnedFromPrefab
   sourcePrefab: {fileID: 8107272217880026275}
+--- !u!114 &1791438083117170012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8107272217880026275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 932db609568e25a4c8593ff548bbb84f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrashPushOnCollision
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  pushMultiplier: 0.55
+  ignoreVertical: 1
+  logDebug: 1

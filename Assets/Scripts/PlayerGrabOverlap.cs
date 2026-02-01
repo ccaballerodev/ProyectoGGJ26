@@ -117,17 +117,38 @@ public class PlayerGrabOverlapSpawnPrefab : MonoBehaviour
         heldRb = heldInstance.GetComponent<Rigidbody>();
         if (heldRb != null)
         {
-            // mientras lo sostienes, lo haces estable
-            heldRb.isKinematic = true;
+            // Primero asegúrate que está simulando para poder tocar velocidades sin warning
+            heldRb.isKinematic = false;
             heldRb.useGravity = false;
 
 #if UNITY_6000_0_OR_NEWER
             heldRb.linearVelocity = Vector3.zero;
 #else
-            heldRb.velocity = Vector3.zero;
+    heldRb.velocity = Vector3.zero;
 #endif
             heldRb.angularVelocity = Vector3.zero;
+
+            // Ahora sí, lo vuelves kinematic para que quede “pegado” al HoldPoint
+            heldRb.isKinematic = true;
         }
+        heldRb = heldInstance.GetComponent<Rigidbody>();
+        if (heldRb != null)
+        {
+            // Primero asegúrate que está simulando para poder tocar velocidades sin warning
+            heldRb.isKinematic = false;
+            heldRb.useGravity = false;
+
+#if UNITY_6000_0_OR_NEWER
+            heldRb.linearVelocity = Vector3.zero;
+#else
+    heldRb.velocity = Vector3.zero;
+#endif
+            heldRb.angularVelocity = Vector3.zero;
+
+            // Ahora sí, lo vuelves kinematic para que quede “pegado” al HoldPoint
+            heldRb.isKinematic = true;
+        }
+
 
         if (logDebug) Debug.Log($"[GrabSpawnPrefab] Instanciado en mano: '{heldInstance.name}' desde prefab '{prefab.name}'");
     }

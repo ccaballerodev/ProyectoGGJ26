@@ -47,7 +47,12 @@ GameObject:
   - component: {fileID: 4296375775098272813}
   - component: {fileID: 6417762550909822459}
   - component: {fileID: -1807489708888820506}
-  m_Layer: 0
+  - component: {fileID: 1637254475370596921}
+  - component: {fileID: 6245878544240203836}
+  - component: {fileID: 9014875671795454562}
+  - component: {fileID: 5427298166731061749}
+  - component: {fileID: 6167694345828861746}
+  m_Layer: 6
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -73,6 +78,7 @@ Transform:
   - {fileID: 8535635291632682818}
   - {fileID: 6121471811738828710}
   - {fileID: 3058087547934485772}
+  - {fileID: 3440293507053445148}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6568866449068439782
@@ -249,6 +255,92 @@ CapsuleCollider:
   m_Height: 0.9
   m_Direction: 1
   m_Center: {x: 0, y: 0.45, z: 0}
+--- !u!114 &1637254475370596921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336358474039498801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b8d517f142032b419a9fb9462a6f4ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGrabOverlapSpawnPrefab
+  holdPoint: {fileID: 3440293507053445148}
+  pickupRadius: 2
+  pickupMask:
+    serializedVersion: 2
+    m_Bits: 8
+  forwardDotThreshold: 0.2
+  grabKey: 20
+  destroyWorldObjectOnPickup: 1
+  logDebug: 1
+--- !u!114 &6245878544240203836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336358474039498801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4dc4831bc0876444abd4552fb4fd2193, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowHeldPrefabHoldToActivate
+  grabber: {fileID: 1637254475370596921}
+  maskState: {fileID: 0}
+  requiredMask: 3
+  throwForce: 14
+  upwardForce: 2.5
+  torque: 6
+  logDebug: 0
+--- !u!114 &9014875671795454562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336358474039498801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 128ac5a07a01c634aab2eee89086589e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityTesterPC_Generic
+  key: 19
+  tapMaxDuration: 0.2
+  holdRequiredTime: 0.75
+  includeInactive: 0
+  holdReceivers:
+  - {fileID: 6245878544240203836}
+  logDebug: 1
+--- !u!114 &5427298166731061749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336358474039498801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 918f144d9984aab44bc56f4c3a7e15f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMaskState
+  currentMask: -1
+--- !u!114 &6167694345828861746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1336358474039498801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4743ae233d19780418168f4fdf2deb71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerPushFromTrash
+  damping: 12
+  maxPushSpeed: 20
 --- !u!1 &4968484155305346471
 GameObject:
   m_ObjectHideFlags: 0
@@ -362,7 +454,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: -2.8151245
+    Value: -131.40889
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -372,7 +464,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: -8.1331
+    Value: -3.8429449
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -489,6 +581,37 @@ MonoBehaviour:
         DecelTime: 0
   PlayerIndex: -1
   AutoEnableInputs: 1
+--- !u!1 &8735577928266877992
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3440293507053445148}
+  m_Layer: 0
+  m_Name: HolderPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3440293507053445148
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8735577928266877992}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2714155306884014781}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &4181059107058323112
 PrefabInstance:
   m_ObjectHideFlags: 0
