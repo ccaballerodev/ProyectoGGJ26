@@ -102,7 +102,7 @@ public class LobbyUIHandler : NetworkBehaviour
         if (IsHost && btnIniciarJuego != null)
         {
             // Se habilita solo cuando hay 4 jugadores exactamente (o más)
-            btnIniciarJuego.interactable = (todosLosJugadores.Length >= 1);
+            btnIniciarJuego.interactable = (todosLosJugadores.Length >= 4);
         }
 
         foreach (PlayerMask jugador in todosLosJugadores)

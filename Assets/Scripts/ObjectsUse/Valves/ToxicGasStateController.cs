@@ -16,7 +16,7 @@ public class ToxicGasStateController : MonoBehaviour
     [SerializeField] private float maxSecondsToHigh = 9f;
 
     [Header("Aplicación visual")]
-    [SerializeField] private bool restartOnSwitch = false; // true = cambio brusco, false = transición natural
+    [SerializeField] private bool restartOnSwitch = false;
     [SerializeField] private bool logDebug = true;
 
     [Header("LOW preset")]
@@ -32,6 +32,10 @@ public class ToxicGasStateController : MonoBehaviour
     [SerializeField] private int maxParticlesHigh = 200;
 
     public GasState State { get; private set; }
+    public bool IsHigh => State == GasState.High;
+
+    // ? Evento: avisa cuando cambie el estado
+    public event System.Action<ToxicGasStateController, GasState> OnStateChanged;
 
     private float timer = 0f;
     private float targetTimeToHigh = 0f;
@@ -75,11 +79,10 @@ public class ToxicGasStateController : MonoBehaviour
             timer = 0f;
             if (logDebug) Debug.Log($"[ToxicGasStateController] Start LOW. Next HIGH in {targetTimeToHigh:0.00}s");
         }
+
+        NotifyStateChanged();
     }
 
-    /// <summary>
-    /// Método público: si está en HIGH, baja a LOW y programa volver a HIGH con random 5-9.
-    /// </summary>
     public bool TryHighToLow()
     {
         if (State != GasState.High)
@@ -97,13 +100,24 @@ public class ToxicGasStateController : MonoBehaviour
         timer = 0f;
 
         if (logDebug) Debug.Log($"[ToxicGasStateController] HIGH -> LOW. Next HIGH in {targetTimeToHigh:0.00}s");
+
+        NotifyStateChanged();
         return true;
     }
 
     public void SetHigh()
     {
+        if (State == GasState.High) return;
+
         State = GasState.High;
         Apply(rateHigh, lifetimeHigh, alphaHigh255, maxParticlesHigh, restartOnSwitch);
+
+        NotifyStateChanged();
+    }
+
+    private void NotifyStateChanged()
+    {
+        OnStateChanged?.Invoke(this, State);
     }
 
     private void RollNextHighTime()

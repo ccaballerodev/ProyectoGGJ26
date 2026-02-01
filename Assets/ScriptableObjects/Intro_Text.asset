@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Intro_Text
   m_EditorClassIdentifier: Assembly-CSharp::TextSequenceSO
   lines:
-  - 'Maicholados
-
-    Malvados y Asociados'
-  - Se me acabaron las ideas
-  - Picon lo mama
+  - "La selva est\xE1 siendo asfixiada."
+  - "La f\xE1brica no se detiene: expulsa desechos y gases como si el mundo fuera
+    desechable."
+  - "Usen sus m\xE1scaras para frenar la maquinaria, ganar segundos imposibles y
+    salvar lo que a\xFAn respira."
+  - "Tiempo l\xEDmite: 05:00."
+  - Tu rol es

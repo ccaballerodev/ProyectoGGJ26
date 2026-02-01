@@ -239,6 +239,7 @@ GameObject:
   - component: {fileID: 1864440843233978783}
   - component: {fileID: 3854061220965331588}
   - component: {fileID: 7560440710441696635}
+  - component: {fileID: 5960348129762893417}
   m_Layer: 0
   m_Name: ToxicGasFX
   m_TagString: Untagged
@@ -900,7 +901,7 @@ ParticleSystem:
     donutRadius: 0.2
     m_Position: {x: 0, y: 0, z: 0}
     m_Rotation: {x: 0, y: 0, z: 0}
-    m_Scale: {x: 5, y: 0.2, z: 5}
+    m_Scale: {x: 3, y: 0.2, z: 3}
     placementMode: 0
     m_MeshMaterialIndex: 0
     m_MeshNormalOffset: 0
@@ -5078,18 +5079,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ToxicGasStateController
   ps: {fileID: 1864440843233978783}
   startState: 0
-  minSecondsToHigh: 5
-  maxSecondsToHigh: 9
-  restartOnSwitch: 0
+  minSecondsToHigh: 12
+  maxSecondsToHigh: 20
+  restartOnSwitch: 1
   logDebug: 1
-  rateLow: 15
-  lifetimeLow: 2
-  alphaLow255: 30
-  maxParticlesLow: 150
+  rateLow: 10
+  lifetimeLow: 1
+  alphaLow255: 10
+  maxParticlesLow: 50
   rateHigh: 40
   lifetimeHigh: 5
   alphaHigh255: 70
   maxParticlesHigh: 200
+--- !u!114 &5960348129762893417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4516734148629537391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3b003680f875cf4d9ea16a74cdfeffe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ToxicGasHighReporter
+  gas: {fileID: 7560440710441696635}
+  logDebug: 0
 --- !u!1 &5210831789039646535
 GameObject:
   m_ObjectHideFlags: 0
@@ -5157,4 +5172,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ToxicZoneTrigger
   gasController: {fileID: 7560440710441696635}
+  requiredMask: 2
   logDebug: 1

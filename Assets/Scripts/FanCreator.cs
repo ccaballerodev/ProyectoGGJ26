@@ -20,6 +20,10 @@ public class FanCreator : MonoBehaviour
     public float maxDistance = 30f;
     public float maxLifeTime = 5f;
 
+    public bool spawnEnabled = true;
+    public void SetActiveSpawning(bool enabled) => spawnEnabled = enabled;
+
+
     private void Start()
     {
         if (centralSpawnPoint == null) centralSpawnPoint = this.transform;
@@ -30,9 +34,10 @@ public class FanCreator : MonoBehaviour
     {
         while (true)
         {
-            for (int i = 0; i < objectsPerBurst; i++)
+            if (spawnEnabled)
             {
-                SpawnObjectOnPerimeter();
+                for (int i = 0; i < objectsPerBurst; i++)
+                    SpawnObjectOnPerimeter();
             }
             yield return new WaitForSeconds(spawnInterval);
         }

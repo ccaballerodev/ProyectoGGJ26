@@ -135,8 +135,8 @@ MonoBehaviour:
   spawnRadius: 3
   blowForce: 10
   torqueAmount: 10
-  maxDistance: 50
-  maxLifeTime: 8
+  maxDistance: 40
+  maxLifeTime: 6
 --- !u!1 &8593473400826633165
 GameObject:
   m_ObjectHideFlags: 0

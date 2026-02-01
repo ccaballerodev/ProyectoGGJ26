@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Ending_Text
   m_EditorClassIdentifier: Assembly-CSharp::TextSequenceSO
   lines:
-  - Nos has salvado...
-  - Estamos agradecidos
+  - "Emisi\xF3n detenida."
+  - "La maquinaria se queda en silencio\u2026 y la selva vuelve a respirar."
+  - Guardianes...
+  - Gracias por salvarme...
