@@ -56,6 +56,10 @@ public class FanCreator : MonoBehaviour
         // Instanciar
         GameObject cube = Instantiate(objectToBlowPrefab, spawnPos, centralSpawnPoint.rotation);
 
+        var marker = cube.GetComponent<SpawnedFromPrefab>();
+        if (marker == null) marker = cube.AddComponent<SpawnedFromPrefab>();
+        marker.sourcePrefab = objectToBlowPrefab;
+
         Rigidbody rb = cube.GetComponent<Rigidbody>();
         if (rb != null)
         {
