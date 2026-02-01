@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Mascara2
   m_EditorClassIdentifier: Assembly-CSharp::MascaraData
   tipo: 1
-  nombreMascara: Mascara2
-  iconoMascara: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  nombreMascara: Rebobinar
+  iconoMascara: {fileID: 21300000, guid: 303fd9ba5b1b2994789667c5569020b7, type: 3}

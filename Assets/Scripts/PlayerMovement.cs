@@ -30,6 +30,9 @@ public class PlayerMovement : NetworkBehaviour
     private NetworkVariable<bool> netIsFalling = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private NetworkVariable<bool> netEstaAburrido = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
     private NetworkVariable<bool> netIsJumping = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsDancing = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsHi = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+    private NetworkVariable<bool> netIsAgarraNalga = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
 
     private float verticalVelocity;
     private bool isGrounded;
@@ -46,13 +49,18 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Generamos el ID siempre, pero el input solo para el dueño
         myTimerID = "TimerAburrido_" + OwnerClientId;
 
         if (IsOwner)
         {
             inputActions.Player.Enable();
             inputActions.Player.Jump.performed += OnJumpPerformed;
+
+            // Suscribir los botones 1, 2 y 3 del Input System
+            // Asegúrate de crearlos en tu archivo .inputactions como "Emote1", "Emote2", etc.
+            inputActions.Player.Emote1.performed += ctx => ToggleEmote(1);
+            inputActions.Player.Emote2.performed += ctx => ToggleEmote(2);
+            inputActions.Player.Emote3.performed += ctx => ToggleEmote(3);
         }
 
         RecargarAnimator();
@@ -74,6 +82,40 @@ public class PlayerMovement : NetworkBehaviour
             if (IsOwner) StartCoroutine(JumpTriggerRoutine());
         }
     }
+
+    private void ToggleEmote(int emoteNum)
+    {
+        if (moveInput.magnitude > 0.1f || !isGrounded) return;
+
+        ResetearTimerAburrimiento();
+
+        if (emoteNum == 2)
+        {
+            // El baile sigue siendo un interruptor (Toggle)
+            netIsDancing.Value = !netIsDancing.Value;
+            netIsHi.Value = false;
+            netIsAgarraNalga.Value = false;
+        }
+        else
+        {
+            // Los otros son disparos únicos: apagamos el baile primero
+            netIsDancing.Value = false;
+
+            if (emoteNum == 1) StartCoroutine(FlashEmote(netIsHi));
+            if (emoteNum == 3) StartCoroutine(FlashEmote(netIsAgarraNalga));
+        }
+    }
+
+    // Corrutina para activar y desactivar rápido la variable de red
+    private System.Collections.IEnumerator FlashEmote(NetworkVariable<bool> netVar)
+    {
+        netVar.Value = true;
+        // Un frame o un tiempo muy corto para que el Animator detecte el cambio
+        yield return new WaitForSeconds(0.1f);
+        netVar.Value = false;
+    }
+
+
 
     // Pequeña rutina para que el estado de salto se vea en la red un momento
     private System.Collections.IEnumerator JumpTriggerRoutine()
@@ -133,7 +175,10 @@ public class PlayerMovement : NetworkBehaviour
 
     private void GestionarTimerAburrimiento()
     {
-        bool estaRealmenteQuieto = moveInput.magnitude < 0.1f && isGrounded && !isFalling;
+        bool estaHaciendoEmote = netIsDancing.Value || netIsHi.Value || netIsAgarraNalga.Value;
+
+        bool estaRealmenteQuieto = moveInput.magnitude < 0.1f && isGrounded && !isFalling && !estaHaciendoEmote;
+
         if (estaRealmenteQuieto)
         {
             if (!TimerManager.IsTimerRunning(myTimerID) && !estaAburrido)
@@ -141,7 +186,10 @@ public class PlayerMovement : NetworkBehaviour
                 TimerManager.StartTimer(myTimerID, tiempoParaAburrirse, () => { estaAburrido = true; });
             }
         }
-        else ResetearTimerAburrimiento();
+        else
+        {
+            ResetearTimerAburrimiento();
+        }
     }
 
     private void ResetearTimerAburrimiento()
@@ -152,7 +200,6 @@ public class PlayerMovement : NetworkBehaviour
 
     private void ActualizarAnimaciones()
     {
-        // Si el modelo cambió o no se ha cargado, intentamos buscarlo
         if (animator == null || !animator.gameObject.activeInHierarchy)
         {
             RecargarAnimator();
@@ -163,12 +210,25 @@ public class PlayerMovement : NetworkBehaviour
         bool grounded = netIsGrounded.Value;
         bool aburrido = netEstaAburrido.Value;
 
-        // Usamos las variables de red para que todos vean lo mismo
+        // Si empezamos a movernos, forzamos que los emotes se apaguen (Solo Owner)
+        if (IsOwner && mag > 0.1f)
+        {
+            netIsHi.Value = false;
+            netIsDancing.Value = false;
+            netIsAgarraNalga.Value = false;
+        }
+
+        // Estados base
         animator.SetBool("Idle", mag <= 0.1f && grounded && !aburrido);
         animator.SetBool("Jog", mag > 0.1f && grounded);
         animator.SetBool("Jump", netIsJumping.Value);
         animator.SetBool("Fall", netIsFalling.Value);
         animator.SetBool("IdleQuitMask", aburrido);
+
+        // Emotes (Sincronizados por red)
+        animator.SetBool("Hi", netIsHi.Value);
+        animator.SetBool("Dance", netIsDancing.Value);
+        animator.SetBool("AgarraNalga", netIsAgarraNalga.Value);
     }
 
     void OnEnable() => inputActions?.Player.Enable();
