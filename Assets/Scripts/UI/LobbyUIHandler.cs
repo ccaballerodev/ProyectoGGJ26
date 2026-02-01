@@ -28,13 +28,12 @@ public class LobbyUIHandler : NetworkBehaviour
     [Header("Control del Host")]
     [SerializeField] private Button btnIniciarJuego;
 
+    private GameObject objPreGame;
+    public static bool objPreGameisActive;
+
     private void Start()
     {
-        // El tiempo se detiene al entrar al lobby
         Time.timeScale = 0f;
-
-        // El botón se oculta preventivamente
-        if (btnIniciarJuego != null) btnIniciarJuego.gameObject.SetActive(false);
     }
 
     public override void OnNetworkSpawn()
@@ -56,6 +55,8 @@ public class LobbyUIHandler : NetworkBehaviour
         {
             ActualizarInterfazLobby();
         }
+
+        
     }
 
     private void ActualizarInterfazLobby()
@@ -74,7 +75,7 @@ public class LobbyUIHandler : NetworkBehaviour
         if (IsHost && btnIniciarJuego != null)
         {
             // Se habilita solo cuando hay 4 jugadores exactamente (o más)
-            btnIniciarJuego.interactable = (todosLosJugadores.Length >= 4);
+            btnIniciarJuego.interactable = (todosLosJugadores.Length >= 1);
         }
 
         foreach (PlayerMask jugador in todosLosJugadores)
